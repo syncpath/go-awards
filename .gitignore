@@ -1,0 +1,24 @@
+# Бинарники и билды
+/bin/
+/go-awards
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Файлы с личной информацией
+/certificates.typ
+/certificates.pdf
+*.typ
+*.pdf
+
+# Папки с личной информацией
+/tables/
+/templates/
+
+# Своп файлы и тд...
+*~
+.*.swp
+.~lock.*
+.DS_Store
