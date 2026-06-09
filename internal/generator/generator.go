@@ -21,16 +21,17 @@ func GenerateTypst(cfg *config.TemplateConfig, table []map[string]string) (strin
 	// Настройка страницы
 	fmt.Fprintf(&sb,
 		`#set page(
-			width: %.3fmm,
-			height: %.3fmm,
-			margin: 0pt,
-			background: place(
-				center + horizon,
-				dx: %.3fmm,
-				dy: %.3fmm,
-				image("%s", width: %.3f%%, height: %.3f%%),
-			),
-		)`,
+	width: %.3fmm,
+	height: %.3fmm,
+	margin: 0pt,
+	background: place(
+		center + horizon,
+		dx: %.3fmm,
+		dy: %.3fmm,
+		image("%s", width: %.3f%%, height: %.3f%%),
+	),
+)
+`,
 		cfg.Width,
 		cfg.Height,
 		cfg.Bg.BgDx,
@@ -39,17 +40,19 @@ func GenerateTypst(cfg *config.TemplateConfig, table []map[string]string) (strin
 		cfg.Bg.BgScale,
 		cfg.Bg.BgScale)
 
+	sb.WriteString("\n")
+
 	// Карты для быстрого поиска связей. Создаем мапу со связями. Если Indent не пустой, то создаем сына в родительском #place, если пустой, то в отдельном)
 	parentToChildren := make(map[string][]config.Field)
 	var rootFields []config.Field
 
 	for _, field := range cfg.Fields {
-			if field.Indent == "" {
-				rootFields = append(rootFields, field)
-			} else {
-				parentToChildren[field.Indent] = append(parentToChildren[field.Indent], field)
-			}
+		if field.Indent == "" {
+			rootFields = append(rootFields, field)
+		} else {
+			parentToChildren[field.Indent] = append(parentToChildren[field.Indent], field)
 		}
+	}
 
 	// А теперь для каждого участника
 	for i, row := range table {
@@ -60,23 +63,34 @@ func GenerateTypst(cfg *config.TemplateConfig, table []map[string]string) (strin
 
 		// Расставляем поля для конкретного участника
 		for _, rootField := range rootFields {
-				rootValue, err := processTemplate(rootField.Value, row)
+			rootValue, err := processTemplate(rootField.Value, row)
+			if err != nil {
+				return "", fmt.Errorf("ошибка замены плейсхолдера: %w", err)
+			}
+
+			fmt.Fprintf(&sb, "#place(top + left, dx: %.3fmm, dy: %.3fmm)[\n", rootField.X, rootField.Y)
+
+			fmt.Fprintf(&sb,
+				`  #block(width: %.3fmm)[
+		#set text(font: "%s", size: %.3fpt, weight: "%s")
+		#align(%s)[%s]
+	]
+`, rootField.Width, rootField.Font, rootField.FontSize, rootField.FontType, rootField.Align, rootValue)
+
+			for _, child := range parentToChildren[rootField.ID] {
+				childValue, err := processTemplate(child.Value, row)
 				if err != nil {
 					return "", fmt.Errorf("ошибка замены плейсхолдера: %w", err)
 				}
-
-				fmt.Fprintf(&sb, "#place(top + left, dx: %.3fmm, dy: %.3fmm)[\n", rootField.X, rootField.Y)
-
 				fmt.Fprintf(&sb,
-					`  #block(width: %.3fmm)[
+					`	 #v(%.3fmm)  
+						 #block(width: %.3fmm)[
 						   #set text(font: "%s", size: %.3fpt, weight: "%s")
 							 #align(%s)[%s]
 						 ]
-					`, rootField.Width, rootField.Font, rootField.FontSize, rootField.FontType, rootField.Align, rootValue)
-
-				for children := range parentToChildren[rootField] {
-				}
+					`, child.IndentValue, child.Width, child.Font, child.FontSize, child.FontType, child.Align, childValue)
 			}
+			sb.WriteString("]\n")
 		}
 	}
 	return sb.String(), nil

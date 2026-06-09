@@ -4,16 +4,16 @@ package config
 type Field struct {
 	ID string `json:"id"` // ID блока
 	// BindTo   string  `json:"bind_to"`   // Прикрепление к таблице CSV. Нет прикрепления - nonе
-	Value       string  `json:"value"`  // Сама строка
-	X           float64 `json:"x"`      // Координаты x в mm
-	Y           float64 `json:"y"`      // Координаты y в mm
-	Width       float64 `json:"width"`  // Ширина в mm
-	Indent      string  `json:"indent"` // Есть ли отступ от блока выше динамический. Указывается ID блока относительно которого отсутп идет. Стандартное значение "". Если стоит ID, то Y не учитывается
-	IndentValue float64 `json:"indent_value"`
-	Align       string  `json:"align"`     // Вырванивание: center, left, right + top/bottom
-	Font        string  `json:"font"`      // Название шрифта
-	FontType    string  `json:"font_type"` // Тип шрифта: regular, thin, bold, black e.t.c.
-	FontSize    float64 `json:"font_size"` // Размер шрифта в pt
+	Value       string  `json:"value"`        // Сама строка
+	X           float64 `json:"x"`            // Координаты x в mm
+	Y           float64 `json:"y"`            // Координаты y в mm
+	Width       float64 `json:"width"`        // Ширина в mm
+	Indent      string  `json:"indent"`       // Есть ли отступ от блока выше динамический. Указывается ID блока относительно которого отсутп идет. Стандартное значение "". Если стоит ID, то Y не учитывается
+	IndentValue float64 `json:"indent_value"` // Если есть Indent, то тут указывается отступ в мм. Если Indent пустое, то это поле игнорируется
+	Align       string  `json:"align"`        // Вырванивание: center, left, right + top/bottom
+	Font        string  `json:"font"`         // Название шрифта
+	FontType    string  `json:"font_type"`    // Тип шрифта: regular, thin, bold, black e.t.c.
+	FontSize    float64 `json:"font_size"`    // Размер шрифта в pt
 }
 
 type Background struct {
