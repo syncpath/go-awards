@@ -156,8 +156,16 @@ func FindFontsCoefs(page pdf.Page) map[string]float64 {
 		if !fontDesc.IsNull() {
 			capHeight := fontDesc.Key("CapHeight").Float64()
 			if capHeight > 0 {
-				coef = capHeight / 1000.0
+				if capHeight > 1000.0 {
+					coef = capHeight / 2048.0
+				} else {
+					coef = capHeight / 1000.0
+				}
 			}
+		}
+
+		if coef < 0.6 || coef > 0.8 {
+			coef = 0.7
 		}
 
 		coefs[cleanName] = coef

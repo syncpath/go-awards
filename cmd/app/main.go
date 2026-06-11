@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/syncpath/go-awards/internal/config"
+	"github.com/syncpath/go-awards/internal/differ"
 	"github.com/syncpath/go-awards/internal/finder"
 	"github.com/syncpath/go-awards/internal/generator"
 	"github.com/syncpath/go-awards/internal/parser"
@@ -37,12 +38,18 @@ func main() {
 	}
 	fmt.Println("Удачно сгенерировано")
 
-	fields, err := finder.FindFields("certificates.pdf")
+	fields, err := finder.FindFields("blagG.pdf")
 	if err != nil {
 		fmt.Println("Ошибка поиска полей pdf:", err)
 		os.Exit(1)
 	}
 	for _, field := range fields {
 		fmt.Println(field)
+	}
+
+	err = differ.DiffPdf("blagG.pdf", "certificates.pdf")
+	if err != nil {
+		fmt.Println("Ошибка диффера: ", err)
+		os.Exit(1)
 	}
 }
