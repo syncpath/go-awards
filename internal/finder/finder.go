@@ -4,6 +4,7 @@ package finder
 import (
 	"errors"
 	"fmt"
+	"math"
 	"path/filepath"
 	"strings"
 
@@ -22,6 +23,7 @@ type MergedText struct {
 	Y        float64
 	S        string
 	W        float64
+	LastX    float64
 }
 
 // FindFields показывает координаты текстовых полей, которые она смогла найти
@@ -55,8 +57,10 @@ func FindFields(path string) ([]string, error) {
 		if len(merged) > 0 {
 			last := &merged[len(merged)-1]
 
-			if last.Font == t.Font && last.FontSize == t.FontSize && last.Y == t.Y {
+			// Шрифты равны, Y равны, расстояние между соседними буквами не больше 20 мм (сравниваем с LastX последней буквы)
+			if last.Font == t.Font && last.FontSize == t.FontSize && last.Y == t.Y && math.Abs(t.X-last.LastX) < 20*(1/coefmm) {
 				last.S += t.S
+				last.LastX = t.X
 				continue
 			}
 		}
@@ -67,6 +71,7 @@ func FindFields(path string) ([]string, error) {
 			X:        t.X,
 			Y:        t.Y,
 			S:        t.S,
+			LastX:    t.X,
 		})
 	}
 
@@ -80,7 +85,7 @@ func FindFields(path string) ([]string, error) {
 	pageStr := fmt.Sprintf("Page: height: %.1fmm, width: %1.fmm", height, width)
 
 	res = append(res, pageStr)
-	for _, text := range merged {
+	for i, text := range merged {
 		cleanName := cleanFontName(text.Font)
 		coef, ok := coefsMap[cleanName]
 		if !ok {
@@ -98,7 +103,17 @@ func FindFields(path string) ([]string, error) {
 			displayText = string(runes)
 		}
 
-		res = append(res, fmt.Sprintf("Text: \"%s\". Font: %s. FontSize: %.2fpt. X: %.2fmm. Y: %.2fmm.", displayText, text.Font, text.FontSize, x, y))
+		var leadingMm float64
+		if i > 0 {
+			prev := merged[i-1]
+			if prev.Y > text.Y {
+				distPts := prev.Y - text.Y
+
+				gapPts := distPts - (text.FontSize * coef)
+				leadingMm = gapPts * coefmm
+			}
+		}
+		res = append(res, fmt.Sprintf("Text: \"%s\". Font: %s. FontSize: %.2fpt. X: %.2fmm. Y: %.2fmm. Leading: %.2fmm", displayText, text.Font, text.FontSize, x, y, leadingMm))
 	}
 
 	return res, nil

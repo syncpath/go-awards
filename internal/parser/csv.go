@@ -3,6 +3,7 @@ package parser
 
 import (
 	"encoding/csv"
+	"errors"
 	"os"
 	"path/filepath"
 )
@@ -24,6 +25,9 @@ func ParseCSV(path string) ([]map[string]string, error) {
 	records, err := reader.ReadAll()
 	if err != nil {
 		return nil, err
+	}
+	if len(records) == 0 || len(records[0]) == 0 {
+		return nil, errors.New("пустой csv файл")
 	}
 
 	var data []map[string]string
