@@ -15,6 +15,8 @@ var exFolder string = "examples/"
 
 const coefmm float64 = 25.4 / 72.0
 
+const defCoef float64 = 0.7
+
 // MergedText вспомогательная структура, нужна, так как ledongthuc/pdf хранит каждый символ как отдельный текст
 type MergedText struct {
 	Font     string
@@ -22,34 +24,128 @@ type MergedText struct {
 	X        float64
 	Y        float64
 	S        string
-	W        float64
 	LastX    float64
 }
 
-// FindFields показывает координаты текстовых полей, которые она смогла найти
-func FindFields(path string) ([]string, error) {
+// PageData вытаскиваем информацию о странице в extractPageData
+type PageData struct {
+	Texts    []Text
+	XMin     float64
+	XMax     float64
+	YMin     float64
+	YMax     float64
+	CoefsMap map[string]float64
+}
+
+// Text пародия на pdf.Text для PageData
+type Text struct {
+	Font     string
+	FontSize float64
+	X, Y     float64
+	S        string
+}
+
+// TextField информация о строке для итогового результата
+type TextField struct {
+	Font     string
+	FontSize float64
+	X, Y     float64
+	Text     string
+	Leading  float64
+}
+
+// PageInfo итоговый результат
+type PageInfo struct {
+	Height float64
+	Width  float64
+	Texts  []TextField
+}
+
+func ReadPdf(path string) (PageInfo, error) {
 	fullpath := filepath.Join(exFolder, path)
 	file, reader, err := pdf.Open(fullpath)
 	if err != nil {
-		return nil, fmt.Errorf("ошибка чтения макета: %w", err)
+		return PageInfo{}, fmt.Errorf("ошибка чтения макета: %w", err)
 	}
 
 	defer file.Close()
 
-	var res []string
-
 	// Подразумевается, что макет имеет только 1 страницу
 	p := reader.Page(1)
-
 	if p.V.IsNull() {
-		return nil, errors.New("страница пустая")
+		return PageInfo{}, errors.New("страница пустая")
 	}
-	coefsMap := FindFontsCoefs(p)
-	texts := p.Content().Text
+
+	data, err := extractPageData(p)
+	if err != nil {
+		return PageInfo{}, err
+	}
+
+	return FindFields(data), nil
+}
+
+func extractPageData(p pdf.Page) (PageData, error) {
+	textsRaw := p.Content().Text
+	var texts []Text
+	for _, t := range textsRaw {
+		text := Text{S: t.S, X: t.X, Y: t.Y, Font: t.Font, FontSize: t.FontSize}
+		texts = append(texts, text)
+	}
+
+	// Параметры страницы
+	mediaBox := p.V.Key("MediaBox")
+	xMin, xMax := mediaBox.Index(0).Float64(), mediaBox.Index(2).Float64()
+	yMin, yMax := mediaBox.Index(1).Float64(), mediaBox.Index(3).Float64()
+
+	// Коэффициент шрифта
+	capHeigths := make(map[string]float64)
+
+	resources := p.V.Key("Resources")
+	if resources.IsNull() {
+		return PageData{}, errors.New("не найдены ресурсы на странице")
+	}
+
+	pfonts := resources.Key("Font")
+	if pfonts.IsNull() {
+		return PageData{}, errors.New("не найдены шрифты на странице")
+	}
+
+	for _, key := range pfonts.Keys() {
+		fontVal := pfonts.Key(key)
+
+		rawName := fontVal.Key("BaseFont").Name()
+
+		if rawName == "" {
+			continue
+		}
+
+		cleanName := CleanFontName(rawName)
+
+		if _, exist := capHeigths[cleanName]; exist {
+			continue
+		}
+		fontDesc := fontVal.Key("FontDescriptor")
+
+		if fontDesc.IsNull() {
+			descendants := fontVal.Key("DescendantFonts")
+			if !descendants.IsNull() && descendants.Len() > 0 {
+				fontDesc = descendants.Index(0).Key("FontDescriptor")
+			}
+		}
+		if !fontDesc.IsNull() {
+			capHeigths[cleanName] = fontDesc.Key("CapHeight").Float64()
+		}
+	}
+	return PageData{Texts: texts, XMin: xMin, XMax: xMax, YMin: yMin, YMax: yMax, CoefsMap: FindFontsCoefs(capHeigths)}, nil
+}
+
+// FindFields показывает координаты текстовых полей, которые она смогла найти
+func FindFields(data PageData) PageInfo {
+	var res PageInfo
 
 	var merged []MergedText
 
-	for _, t := range texts {
+	for _, t := range data.Texts {
 		if t.S == "" {
 			continue
 		}
@@ -75,25 +171,20 @@ func FindFields(path string) ([]string, error) {
 		})
 	}
 
-	// Параметры страницы
-	mediaBox := p.V.Key("MediaBox")
-	xMin, xMax := mediaBox.Index(0).Float64(), mediaBox.Index(2).Float64()
-	yMin, yMax := mediaBox.Index(1).Float64(), mediaBox.Index(3).Float64()
+	height := (data.YMax - data.YMin) * coefmm
+	width := (data.XMax - data.XMin) * coefmm
 
-	height := (yMax - yMin) * coefmm
-	width := (xMax - xMin) * coefmm
-	pageStr := fmt.Sprintf("Page: height: %.1fmm, width: %1.fmm", height, width)
+	res.Height, res.Width = round2(height), round2(width)
 
-	res = append(res, pageStr)
 	for i, text := range merged {
-		cleanName := cleanFontName(text.Font)
-		coef, ok := coefsMap[cleanName]
+		cleanName := CleanFontName(text.Font)
+		coef, ok := data.CoefsMap[cleanName]
 		if !ok {
-			coef = 0.7
+			coef = defCoef
 		}
 
-		x := (text.X - xMin) * coefmm
-		y := (yMax - (text.Y + text.FontSize*coef)) * coefmm
+		x := (text.X - data.XMin) * coefmm
+		y := (data.YMax - (text.Y + text.FontSize*coef)) * coefmm
 
 		runes := []rune(text.S)
 		var displayText string
@@ -113,77 +204,44 @@ func FindFields(path string) ([]string, error) {
 				leadingMm = gapPts * coefmm
 			}
 		}
-		res = append(res, fmt.Sprintf("Text: \"%s\". Font: %s. FontSize: %.2fpt. X: %.2fmm. Y: %.2fmm. Leading: %.2fmm", displayText, text.Font, text.FontSize, x, y, leadingMm))
+		res.Texts = append(res.Texts, TextField{X: round2(x), Y: round2(y), Font: text.Font, FontSize: round2(text.FontSize), Text: displayText, Leading: round2(leadingMm)})
 	}
 
-	return res, nil
-}
-
-func cleanFontName(font string) string {
-	if parts := strings.Split(font, "+"); len(parts) > 1 {
-		font = parts[1]
-	}
-
-	font = strings.ToLower(font)
-
-	font = strings.Split(font, "-")[0]
-
-	return font
+	return res
 }
 
 // FindFontsCoefs считает коэффициент для шрифтов и возрвращает мапу c коэффициентом для каждого шрифта. Эта функция нужна из-за того, что библиотека ledongthuc/pdf показывает координаты левого нижнего угла текста, а typst делает это с левого верхнего угла.
-func FindFontsCoefs(page pdf.Page) map[string]float64 {
+func FindFontsCoefs(fontsCapHeigths map[string]float64) map[string]float64 {
 	coefs := make(map[string]float64)
-	resources := page.V.Key("Resources")
-	if resources.IsNull() {
-		return coefs
-	}
 
-	fonts := resources.Key("Font")
-	if fonts.IsNull() {
-		return coefs
-	}
+	for font := range fontsCapHeigths {
+		coef := defCoef
 
-	for _, key := range fonts.Keys() {
-		fontVal := fonts.Key(key)
-
-		rawName := fontVal.Key("BaseFont").Name()
-
-		if rawName == "" {
-			continue
-		}
-
-		cleanName := cleanFontName(rawName)
-
-		if _, exist := coefs[cleanName]; exist {
-			continue
-		}
-		fontDesc := fontVal.Key("FontDescriptor")
-
-		if fontDesc.IsNull() {
-			descendants := fontVal.Key("DescendantFonts")
-			if !descendants.IsNull() && descendants.Len() > 0 {
-				fontDesc = descendants.Index(0).Key("FontDescriptor")
-			}
-		}
-		coef := 0.7
-
-		if !fontDesc.IsNull() {
-			capHeight := fontDesc.Key("CapHeight").Float64()
-			if capHeight > 0 {
-				if capHeight > 1000.0 {
-					coef = capHeight / 2048.0
-				} else {
-					coef = capHeight / 1000.0
-				}
+		if fontsCapHeigths[font] > 0 {
+			if fontsCapHeigths[font] > 1000.0 {
+				coef = fontsCapHeigths[font] / 2048.0
+			} else {
+				coef = fontsCapHeigths[font] / 1000.0
 			}
 		}
 
 		if coef < 0.6 || coef > 0.8 {
-			coef = 0.7
+			coef = defCoef
 		}
 
-		coefs[cleanName] = coef
+		coefs[font] = round2(coef)
 	}
 	return coefs
+}
+
+func round2(num float64) float64 {
+	return math.Round(num*100) / 100
+}
+
+func CleanFontName(font string) string {
+	if i := strings.Index(font, "+"); i >= 0 {
+		font = font[i+1:]
+	}
+
+	return font
 }

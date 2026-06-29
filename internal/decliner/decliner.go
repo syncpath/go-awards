@@ -65,11 +65,14 @@ func Decline(fio string, p string, short bool) (string, error) {
 	}
 
 	fioWords := strings.Fields(fio)
-	gender := DetectGender(fio)
 	l := len(fioWords)
 
 	if l < 2 {
 		return "", errors.New("ФИО должно содержать хотя бы фамилию и имя")
+	}
+
+	if l > 3 {
+		return "", errors.New("ФИО должно быть не более 3 слов. Eсли есть ФИО с 4 и более словами, в таблице оставьте только 3, в итоговом typst исправьте ФИО для данного человека")
 	}
 
 	if strings.ToLower(p) == "именительный" {
@@ -90,6 +93,8 @@ func Decline(fio string, p string, short bool) (string, error) {
 
 	// Petrovich принимает на вход в InfFio строку из 3 слов, если 2 слова, придется каждое по отдельности. Так как отчество неизвестно, то определить пол сложно. По умолчанию ставится мужской пол. Если человек оказался женского пола, то нужно вручную в итоговом .typ поменять склонение
 	if len(fioWords) <= 2 {
+
+		gender := DetectGender(fio)
 		if !short {
 			fioOut := strings.Join([]string{petr.InfLastname(fioWords[0], val, gender), petr.InfFirstname(fioWords[1], val, gender)}, " ")
 			return fioOut, nil

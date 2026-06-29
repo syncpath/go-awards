@@ -62,7 +62,7 @@ func GenerateTypst(cfg *config.TemplateConfig, table []map[string]string) (strin
 	visited := make(map[string]bool)
 	visiting := make(map[string]bool)
 	for _, field := range cfg.Fields {
-		if err := cycleCheck(field, parentToChildren, visited, visiting); err != nil {
+		if err := CycleCheck(field, parentToChildren, visited, visiting); err != nil {
 			return "", fmt.Errorf("ошибка валидации шаблона: %w", err)
 		}
 	}
@@ -93,7 +93,7 @@ func GenerateTypst(cfg *config.TemplateConfig, table []map[string]string) (strin
 
 			fmt.Fprintf(&sb, "#place(%s, dx: %.3fmm, dy: %.3fmm)[\n", rootField.PlaceAlign, rootField.X, rootField.Y)
 
-			err := renderField(rootField, parentToChildren, row, &sb, 1)
+			err := RenderField(rootField, parentToChildren, row, &sb, 1)
 			if err != nil {
 				return "", fmt.Errorf("ошибка генерации typst: %w", err)
 			}
@@ -104,7 +104,7 @@ func GenerateTypst(cfg *config.TemplateConfig, table []map[string]string) (strin
 	return sb.String(), nil
 }
 
-func cycleCheck(field config.Field, parentToChild map[string][]config.Field, visited map[string]bool, visiting map[string]bool) error {
+func CycleCheck(field config.Field, parentToChild map[string][]config.Field, visited map[string]bool, visiting map[string]bool) error {
 	if visiting[field.ID] {
 		return errors.New("обнаружена циклическая зависимость или два поля указывают на одного ребенка")
 	}
@@ -115,7 +115,7 @@ func cycleCheck(field config.Field, parentToChild map[string][]config.Field, vis
 	visiting[field.ID] = true
 
 	for _, child := range parentToChild[field.ID] {
-		if err := cycleCheck(child, parentToChild, visited, visiting); err != nil {
+		if err := CycleCheck(child, parentToChild, visited, visiting); err != nil {
 			return err
 		}
 	}
@@ -125,8 +125,8 @@ func cycleCheck(field config.Field, parentToChild map[string][]config.Field, vis
 	return nil
 }
 
-// renderField вспомогательная функция для рекурсивного обхода
-func renderField(field config.Field, parentToChild map[string][]config.Field, row map[string]string, sb *strings.Builder, depth int) error {
+// RenderField вспомогательная функция для рекурсивного обхода
+func RenderField(field config.Field, parentToChild map[string][]config.Field, row map[string]string, sb *strings.Builder, depth int) error {
 	indent := strings.Repeat("  ", depth)
 	value, err := processTemplate(field.Value, row)
 	if err != nil {
@@ -150,7 +150,7 @@ func renderField(field config.Field, parentToChild map[string][]config.Field, ro
 	for _, child := range parentToChild[field.ID] {
 		fmt.Fprintf(sb, "%s#v(%.3fmm)\n", indent+"  ", child.IndentValue)
 
-		if err := renderField(child, parentToChild, row, sb, depth+1); err != nil {
+		if err := RenderField(child, parentToChild, row, sb, depth+1); err != nil {
 			return err
 		}
 	}
@@ -191,7 +191,7 @@ func processTemplate(value string, row map[string]string) (string, error) {
 			}
 
 			sl := strings.Fields(r)
-			if lineBr < 0 || lineBr > len(sl) {
+			if lineBr <= 0 || lineBr >= len(sl) {
 				return "", errors.New("идентификатор переноса должен быть больше нуля, но меньше двух")
 			}
 

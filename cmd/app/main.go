@@ -19,7 +19,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	cfg, err := config.LoadConfig("certificates.json")
+	cfg, err := config.LoadConfig(config.RealFS{}, "certificates.json")
 	if err != nil {
 		fmt.Println("ошибка загрузки конфига")
 		os.Exit(1)
@@ -45,13 +45,14 @@ func main() {
 	}
 	fmt.Println("Удачно сгенерировано")
 
-	fields, err := finder.FindFields("Серт.pdf")
+	fields, err := finder.ReadPdf("Серт.pdf")
 	if err != nil {
 		fmt.Println("Ошибка поиска полей pdf:", err)
 		os.Exit(1)
 	}
-	for _, field := range fields {
-		fmt.Println(field)
+	fmt.Printf("Height %v, Width: %v\n", fields.Height, fields.Width)
+	for _, field := range fields.Texts {
+		fmt.Printf("Teкст: %s. Шрифт: %s. Размер шрифта: %v pt. X: %v mm. Y: %v mm. Отступ: %v mm\n", field.Text, field.Font, field.FontSize, field.X, field.Y, field.Leading)
 	}
 
 	err = differ.DiffPdf("Серт.pdf", "certificates.pdf")

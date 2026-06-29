@@ -4,6 +4,7 @@ package parser
 import (
 	"encoding/csv"
 	"errors"
+	"io"
 	"os"
 	"path/filepath"
 )
@@ -11,7 +12,7 @@ import (
 // tablesPath папка с таблицами, чтение таблиц только из нее
 const tablesPath string = "tables/"
 
-// ParseCSV чтение CSV таблицы
+// ParseCSV загрузка и обработка CSV таблицы
 func ParseCSV(path string) ([]map[string]string, error) {
 	fullpath := filepath.Join(tablesPath, path)
 	file, err := os.Open(fullpath)
@@ -19,13 +20,17 @@ func ParseCSV(path string) ([]map[string]string, error) {
 		return nil, err
 	}
 	defer file.Close()
+	return ParseCSVFile(file)
+}
 
-	reader := csv.NewReader(file)
-
+// ParseCSVFile обработка CSV таблицы
+func ParseCSVFile(r io.Reader) ([]map[string]string, error) {
+	reader := csv.NewReader(r)
 	records, err := reader.ReadAll()
 	if err != nil {
 		return nil, err
 	}
+
 	if len(records) == 0 || len(records[0]) == 0 {
 		return nil, errors.New("пустой csv файл")
 	}
