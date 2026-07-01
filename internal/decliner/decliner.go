@@ -36,7 +36,7 @@ func findRulesPath() (string, error) {
 		}
 		dir = parent
 	}
-	return "", errors.New("Rules/rules.json не найдена")
+	return "", errors.New("путь Rules/rules.json не найден")
 }
 
 var (

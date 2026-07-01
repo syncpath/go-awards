@@ -9,12 +9,9 @@ import (
 	"path/filepath"
 )
 
-// tablesPath папка с таблицами, чтение таблиц только из нее
-const tablesPath string = "tables/"
-
 // ParseCSV загрузка и обработка CSV таблицы
-func ParseCSV(path string) ([]map[string]string, error) {
-	fullpath := filepath.Join(tablesPath, path)
+func ParseCSV(dir, name string) ([]map[string]string, error) {
+	fullpath := filepath.Join(dir, name)
 	file, err := os.Open(fullpath)
 	if err != nil {
 		return nil, err

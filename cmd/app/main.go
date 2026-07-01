@@ -25,7 +25,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	table, err := parser.ParseCSV("NN_reports.csv")
+	table, err := parser.ParseCSV("tables", "NN_reports.csv")
 	if err != nil {
 		fmt.Println("ошибка загрузки таблицы")
 		os.Exit(1)
@@ -45,7 +45,7 @@ func main() {
 	}
 	fmt.Println("Удачно сгенерировано")
 
-	fields, err := finder.ReadPdf("Серт.pdf")
+	fields, err := finder.ReadPdf("examples", "Серт.pdf")
 	if err != nil {
 		fmt.Println("Ошибка поиска полей pdf:", err)
 		os.Exit(1)

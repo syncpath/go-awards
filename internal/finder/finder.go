@@ -11,8 +11,6 @@ import (
 	"github.com/ledongthuc/pdf"
 )
 
-var exFolder string = "examples/"
-
 const coefmm float64 = 25.4 / 72.0
 
 const defCoef float64 = 0.7
@@ -61,8 +59,8 @@ type PageInfo struct {
 	Texts  []TextField
 }
 
-func ReadPdf(path string) (PageInfo, error) {
-	fullpath := filepath.Join(exFolder, path)
+func ReadPdf(path string, name string) (PageInfo, error) {
+	fullpath := filepath.Join(path, name)
 	file, reader, err := pdf.Open(fullpath)
 	if err != nil {
 		return PageInfo{}, fmt.Errorf("ошибка чтения макета: %w", err)
