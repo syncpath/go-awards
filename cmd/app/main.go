@@ -19,7 +19,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	cfg, err := config.LoadConfig(config.RealFS{}, "certificates.json")
+	cfg, err := config.LoadConfig(config.RealFS{}, "templates", "certificates.json")
 	if err != nil {
 		fmt.Println("ошибка загрузки конфига")
 		os.Exit(1)

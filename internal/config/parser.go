@@ -6,9 +6,6 @@ import (
 	"path/filepath"
 )
 
-// templatesDir конфиги строго в папке templates
-const templatesDir = "templates/"
-
 type FileReader interface {
 	ReadFile(name string) ([]byte, error)
 }
@@ -20,8 +17,8 @@ func (RealFS) ReadFile(name string) ([]byte, error) {
 }
 
 // LoadConfig загрузка файла конфига
-func LoadConfig(fs FileReader, path string) (*TemplateConfig, error) {
-	fullPath := filepath.Join(templatesDir, path)
+func LoadConfig(fs FileReader, dir, name string) (*TemplateConfig, error) {
+	fullPath := filepath.Join(dir, name)
 	bytes, err := fs.ReadFile(fullPath)
 	if err != nil {
 		return nil, err

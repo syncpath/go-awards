@@ -67,7 +67,7 @@ func TestLoadConfig(t *testing.T) {
 			err:   nil,
 		}
 
-		got, err := config.LoadConfig(mock, "dummy.json")
+		got, err := config.LoadConfig(mock, ".", "dummy.json")
 		if err != nil {
 			t.Fatalf("получил err, ожидал nil")
 		}
@@ -81,7 +81,7 @@ func TestLoadConfig(t *testing.T) {
 			bytes: nil,
 			err:   os.ErrNotExist,
 		}
-		_, err := config.LoadConfig(mock, "missing.json")
+		_, err := config.LoadConfig(mock, ".", "missing.json")
 		if err == nil {
 			t.Fatalf("получил nil, ожидал err")
 		}
