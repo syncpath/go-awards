@@ -1,6 +1,7 @@
 package config_test
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"reflect"
@@ -84,6 +85,9 @@ func TestLoadConfig(t *testing.T) {
 		_, err := config.LoadConfig(mock, ".", "missing.json")
 		if err == nil {
 			t.Fatalf("получил nil, ожидал err")
+		}
+		if !errors.Is(err, os.ErrNotExist) {
+			t.Errorf("ожидал ошибку %v, но получил %v", os.ErrNotExist, err)
 		}
 	})
 }

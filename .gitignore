@@ -1,26 +1,41 @@
-# Бинарники и билды
-/bin/
-/go-awards
+# бинарники и билды
+/app
+/ui
 *.exe
 *.exe~
 *.dll
 *.so
 *.dylib
 
-# Файлы с личной информацией
-/certificates.typ
-/certificates.pdf
+# файлы и папки с личной информацией (кроме тестовых данных)
 *.typ
 *.pdf
+/materials/*
+!/materials/templates/
+!/materials/examples/
+!/materials/tables/
+!/materials/diff/
+!/materials/images/
 
-# Папки с личной информацией
-/tables/
-/templates/
-/examples/
-/diff/
-/images/
+/materials/templates/*
+!/materials/templates/hello.json
+!/materials/templates/.gitkeep
 
-# Своп файлы и тд...
+/materials/examples/*
+!/materials/examples/hello.pdf
+!/materials/examples/.gitkeep
+
+/materials/tables/*
+!/materials/tables/hello.csv
+!/materials/tables/.gitkeep
+
+/materials/diff/*
+!/materials/diff/.gitkeep
+
+/materials/images/*
+!/materials/images/.gitkeep
+
+# своп файлы и тд.
 *~
 .*.swp
 .~lock.*

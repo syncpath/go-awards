@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/ledongthuc/pdf"
@@ -151,7 +152,7 @@ func FindFields(data PageData) PageInfo {
 		if len(merged) > 0 {
 			last := &merged[len(merged)-1]
 
-			// Шрифты равны, Y равны, расстояние между соседними буквами не больше 20 мм (сравниваем с LastX последней буквы)
+			// Шрифты равны, Y равны, расстояние между соседними буквами не больше 20 мм
 			if last.Font == t.Font && last.FontSize == t.FontSize && last.Y == t.Y && math.Abs(t.X-last.LastX) < 20*(1/coefmm) {
 				last.S += t.S
 				last.LastX = t.X
@@ -168,6 +169,13 @@ func FindFields(data PageData) PageInfo {
 			LastX:    t.X,
 		})
 	}
+
+	sort.SliceStable(merged, func(i, j int) bool {
+		if merged[i].Y != merged[j].Y {
+			return merged[i].Y > merged[j].Y
+		}
+		return merged[i].X < merged[j].X
+	})
 
 	height := (data.YMax - data.YMin) * coefmm
 	width := (data.XMax - data.XMin) * coefmm
@@ -193,14 +201,15 @@ func FindFields(data PageData) PageInfo {
 		}
 
 		var leadingMm float64
-		if i > 0 {
-			prev := merged[i-1]
-			if prev.Y > text.Y {
-				distPts := prev.Y - text.Y
-
-				gapPts := distPts - (text.FontSize * coef)
-				leadingMm = gapPts * coefmm
+		for k := i - 1; k >= 0; k-- {
+			prev := merged[k]
+			if prev.Y <= text.Y {
+				continue
 			}
+			distPts := prev.Y - text.Y
+			gapPts := distPts - coef*text.FontSize
+			leadingMm = gapPts * coefmm
+			break
 		}
 		res.Texts = append(res.Texts, TextField{X: round2(x), Y: round2(y), Font: text.Font, FontSize: round2(text.FontSize), Text: displayText, Leading: round2(leadingMm)})
 	}

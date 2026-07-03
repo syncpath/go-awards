@@ -9,20 +9,21 @@ import (
 )
 
 var (
-	exampleDir string = "examples/"
+	exampleDir string = "materials/examples/"
 	pathDir    string = ""
-	pdfOut     string = filepath.Join("diff", "output-diff.pdf")
-	pngPrefix  string = filepath.Join("diff", "output-diff")
+	diffDir    string = "materials/diff"
+	pdfOut     string = filepath.Join(diffDir, "output-diff.pdf")
+	pngPrefix  string = filepath.Join(diffDir, "output-diff")
 )
 
 func DiffPdf(file1 string, file2 string) error {
-	os.MkdirAll("diff", 0o755)
+	os.MkdirAll(diffDir, 0o755)
 
 	file1 = filepath.Join(exampleDir, file1)
 	file2 = filepath.Join(pathDir, file2)
 
-	tmp1 := filepath.Join("diff", "tmp1.pdf")
-	tmp2 := filepath.Join("diff", "tmp2.pdf")
+	tmp1 := filepath.Join(diffDir, "tmp1.pdf")
+	tmp2 := filepath.Join(diffDir, "tmp2.pdf")
 
 	cmd1 := exec.Command("qpdf", file1, "--pages", ".", "1", "--", tmp1)
 	cmd2 := exec.Command("qpdf", file2, "--pages", ".", "1", "--", tmp2)

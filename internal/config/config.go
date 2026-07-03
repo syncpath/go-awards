@@ -8,10 +8,10 @@ type Field struct {
 	Y           float64 `json:"y"`            // Координаты y в mm
 	Width       float64 `json:"width"`        // Ширина в mm
 	Indent      string  `json:"indent"`       // Есть ли отступ от блока выше динамический. Указывается ID блока относительно которого отсутп идет. Стандартное значение "". Если стоит ID, то Y не учитывается
-	IndentValue float64 `json:"indent_value"` // Если есть Indent, то тут указывается отступ в em. Если Indent пустое, то это поле игнорируется
+	IndentValue float64 `json:"indent_value"` // Если есть Indent, то тут указывается отступ в mm. Если Indent пустое, то это поле игнорируется
 	Align       string  `json:"align"`        // Вырванивание текста внутри блока: center, left, right + top/bottom
 	PlaceAlign  string  `json:"place_align"`  // Выравнивание самого блока текст: center, left, right + top/bottom
-	Leading     float64 `json:"leading"`      // Межстрочный интервал (в em)
+	Leading     float64 `json:"leading"`      // Межстрочный интервал (в mm)
 	Spacing     float64 `json:"spacing"`      // Пробелы между словами (в %, по стандарту 100)
 	Tracking    float64 `json:"tracking"`     // Расстояние между буквами в мм
 	Color       string  `json:"color"`        // HEX кодировка цвета шрифта

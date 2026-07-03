@@ -1,0 +1,8 @@
+{
+  "title": "hello",
+  "width": 210,
+  "height": 297,
+  "fields": [
+    { "id": "name", "value": "тест!", "x": 10, "y": 20 }
+  ]
+}

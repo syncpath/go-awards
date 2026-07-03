@@ -13,7 +13,7 @@ import (
 )
 
 func TestReadPdf(t *testing.T) {
-	dir, err := testutil.FindPath("examples")
+	dir, err := testutil.FindPath("materials/examples")
 	if err != nil {
 		t.Fatalf("ошибка выполнения теста: %v", err)
 	}

@@ -13,7 +13,7 @@ import (
 )
 
 func TestParseCSV(t *testing.T) {
-	dir, err := testutil.FindPath("tables")
+	dir, err := testutil.FindPath("materials/tables")
 	if err != nil {
 		t.Fatalf("папка tables не найдена")
 	}

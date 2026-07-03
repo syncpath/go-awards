@@ -164,7 +164,7 @@ func TestFindFields(t *testing.T) {
 			},
 		},
 		{
-			"Два текста, разница в иксах 20 мм",
+			"Два текста, разница в иксах меньше 2em (склейка)",
 			finder.PageData{
 				Texts: []finder.Text{
 					{
@@ -178,7 +178,7 @@ func TestFindFields(t *testing.T) {
 						Font:     "funnyRegular",
 						FontSize: 14.0,
 						Y:        30.0,
-						X:        76.69,
+						X:        47.0,
 						S:        "м",
 					},
 				},
@@ -252,7 +252,7 @@ func TestFindFields(t *testing.T) {
 			},
 		},
 		{
-			"Два текста, разница в иксах чуть больше 20 мм",
+			"Два текста, разница в иксах больше 2em (без склейки)",
 			finder.PageData{
 				Texts: []finder.Text{
 					{

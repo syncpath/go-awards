@@ -12,7 +12,7 @@ import (
 )
 
 func TestLoadConfigRealFS(t *testing.T) {
-	dir, err := testutil.FindPath("templates")
+	dir, err := testutil.FindPath("materials/templates")
 	if err != nil {
 		t.Fatalf("папка templates не найдена")
 	}
